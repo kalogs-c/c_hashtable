@@ -6,6 +6,8 @@
 #define HT_PRIME_1 7993
 #define HT_PRIME_2 8011
 
+static ht_item HT_DELETED_ITEM = {NULL, NULL};
+
 static ht_item* new_item(const char* key, const char* value) {
   ht_item* item = malloc(sizeof(ht_item));
   item->key = strdup(key);
@@ -65,6 +67,14 @@ void ht_insert(hash_table* ht, const char* key, const char* value) {
   int attempts = 1;
   ht_item* curr_item = ht->items[index];
   while (curr_item) {
+    if (curr_item != &HT_DELETED_ITEM) {
+      if (strcmp(curr_item->key, key) == 0) {
+        destroy_item(curr_item);
+        ht->items[index] = item;
+        return;
+      }
+    }
+
     index = create_hash(key, ht->size, attempts);
     curr_item = ht->items[index];
     attempts++;
@@ -79,9 +89,11 @@ char* ht_search(hash_table* ht, const char* key) {
   ht_item* curr_item = ht->items[index];
 
   int attempts = 1;
-  while (curr_item != NULL) {
-    if (strcmp(curr_item->key, key) == 0) {
-      return curr_item->value;
+  while (curr_item) {
+    if (curr_item != &HT_DELETED_ITEM) {
+      if (strcmp(curr_item->key, key) == 0) {
+        return curr_item->value;
+      }
     }
 
     index = create_hash(key, ht->size, attempts);
@@ -97,9 +109,11 @@ bool ht_has(hash_table* ht, const char* key) {
   ht_item* curr_item = ht->items[index];
 
   int attempts = 1;
-  while (curr_item != NULL) {
-    if (strcmp(curr_item->key, key) == 0) {
-      return true;
+  while (curr_item) {
+    if (curr_item != &HT_DELETED_ITEM) {
+      if (strcmp(curr_item->key, key) == 0) {
+        return true;
+      }
     }
 
     index = create_hash(key, ht->size, attempts);
@@ -108,4 +122,25 @@ bool ht_has(hash_table* ht, const char* key) {
   }
 
   return false;
+}
+
+void ht_delete(hash_table* ht, const char* key) {
+  size_t index = create_hash(key, ht->size, 0);
+  ht_item* curr_item = ht->items[index];
+
+  int attempts = 1;
+  while (curr_item) {
+    if (curr_item != &HT_DELETED_ITEM) {
+      if (strcmp(curr_item->key, key) == 0) {
+        destroy_item(curr_item);
+        curr_item = &HT_DELETED_ITEM;
+      }
+    }
+
+    index = create_hash(key, ht->size, attempts);
+    curr_item = ht->items[index];
+    attempts++;
+  }
+
+  ht->count--;
 }
