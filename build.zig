@@ -1,62 +1,46 @@
 const std = @import("std");
 
-const base_files = [_][]const u8{
-    "src/hash_table.c",
-    "src/prime.c",
-};
-
-const base_flags = [_][]const u8{
-    "-std=c23",
-    "-Wall",
-    "-Wextra",
-    "-Werror",
-    "-O3",
-};
-
-fn build_lib(b: *std.Build) void {
-    const ht = b.addStaticLibrary(.{
-        .name = "libc_hashtable",
-        .target = b.host,
-        .optimize = b.standardOptimizeOption(.{}),
-    });
-
-    const files = base_files;
-    const flags = base_flags;
-
-    ht.addCSourceFiles(.{
-        .files = &files,
-        .flags = &flags,
-    });
-
-    ht.linkLibC();
-    b.installArtifact(ht);
-}
-
-fn build_exe(b: *std.Build) void {
-    const exe = b.addExecutable(.{
-        .name = "c_hashtable",
-        .target = b.host,
-        .optimize = b.standardOptimizeOption(.{}),
-    });
-
-    const files = base_files ++ [_][]const u8{
-        "src/main.c",
-    };
-
-    const flags = base_flags ++ [_][]const u8{
-        "-g",
-    };
-
-    exe.addCSourceFiles(.{
-        .files = &files,
-        .flags = &flags,
-    });
-
-    exe.linkLibC();
-    b.installArtifact(exe);
-}
-
 pub fn build(b: *std.Build) void {
-    // build_lib(b);
-    build_exe(b);
+    const target = b.host;
+    const optimize = b.standardOptimizeOption(.{});
+
+    const unit_tests = b.addTest(.{
+        .root_source_file = b.path("src/tests.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    unit_tests.linkLibC();
+    unit_tests.addIncludePath(b.path("src"));
+
+    const run_tests = b.addRunArtifact(unit_tests);
+    const test_step = b.step("test", "Run unit tests");
+    test_step.dependOn(&run_tests.step);
+
+    const lib = b.addStaticLibrary(.{
+        .name = "c_hashtable",
+        .target = target,
+        .optimize = optimize,
+    });
+
+    const files = [_][]const u8{
+        "src/hash_table.c",
+        "src/prime.c",
+    };
+
+    const flags = [_][]const u8{
+        "-std=c23",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-O3",
+    };
+
+    lib.addCSourceFiles(.{
+        .files = &files,
+        .flags = &flags,
+    });
+
+    lib.linkLibC();
+    b.installArtifact(lib);
 }

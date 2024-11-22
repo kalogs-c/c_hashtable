@@ -2,14 +2,13 @@
 #include "prime.h"
 #include <math.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define HT_PRIME_1 7993
 #define HT_PRIME_2 8011
 
-const static size_t HT_INITIAL_BASE_SIZE = 5;
+const static size_t HT_INITIAL_BASE_SIZE = 50;
 static ht_item HT_DELETED_ITEM = {NULL, NULL};
 
 static ht_item* new_item(const char* key, const char* value) {
