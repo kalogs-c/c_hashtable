@@ -2,13 +2,14 @@
 #include "prime.h"
 #include <math.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define HT_PRIME_1 7993
 #define HT_PRIME_2 8011
 
-const static size_t HT_INITIAL_BASE_SIZE = 50;
+const static size_t HT_INITIAL_BASE_SIZE = 5;
 static ht_item HT_DELETED_ITEM = {NULL, NULL};
 
 static ht_item* new_item(const char* key, const char* value) {
@@ -46,7 +47,7 @@ hash_table* ht_new() { return new_sized_ht(HT_INITIAL_BASE_SIZE); }
 void ht_destroy(hash_table* ht) {
   for (size_t i = 0; i < ht->size; i++) {
     ht_item* item = ht->items[i];
-    if (item != NULL) {
+    if (item != NULL && item != &HT_DELETED_ITEM) {
       destroy_item(item);
     }
   }
@@ -60,7 +61,7 @@ static void resize_ht(hash_table* ht, const size_t base_size) {
   }
 
   hash_table* new_ht = new_sized_ht(base_size);
-  for (int i = 0; i < ht->size; i++) {
+  for (size_t i = 0; i < ht->size; i++) {
     ht_item* item = ht->items[i];
     if (item != NULL && item != &HT_DELETED_ITEM) {
       ht_insert(new_ht, item->key, item->value);
@@ -96,7 +97,7 @@ static size_t hash(const char* key, const int alpha, const size_t ht_size) {
   size_t hash = 0;
   const uint32_t key_len = strlen(key);
 
-  for (int i = 0; i < key_len; i++) {
+  for (size_t i = 0; i < key_len; i++) {
     hash += pow(alpha, key_len - (i + 1)) * key[i];
     hash = hash % ht_size;
   }
@@ -195,7 +196,7 @@ void ht_delete(hash_table* ht, const char* key) {
     if (curr_item != &HT_DELETED_ITEM) {
       if (strcmp(curr_item->key, key) == 0) {
         destroy_item(curr_item);
-        curr_item = &HT_DELETED_ITEM;
+        ht->items[index] = &HT_DELETED_ITEM;
       }
     }
 
