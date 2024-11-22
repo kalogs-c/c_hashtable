@@ -9,6 +9,7 @@ typedef struct {
 } ht_item;
 
 typedef struct {
+  size_t base_size;
   size_t size;
   size_t count;
   ht_item** items;
